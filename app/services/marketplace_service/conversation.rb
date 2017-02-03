@@ -11,6 +11,7 @@ module MarketplaceService
         :messages,
         :transaction,
         :listing,
+        :order,
         :last_message_at,
         :starter_person,
         :other_person

@@ -54,6 +54,7 @@ class Transaction < ActiveRecord::Base
 
   belongs_to :community
   belongs_to :listing
+  belongs_to :order
   has_many :transaction_transitions, dependent: :destroy, foreign_key: :transaction_id
   has_one :booking, :dependent => :destroy
   has_one :shipping_address, dependent: :destroy
@@ -134,7 +135,7 @@ class Transaction < ActiveRecord::Base
   end
 
   def testimonial_from_author
-    testimonials.find { |testimonial| testimonial.author_id == author.id }
+    testimonials.find { |testimonial| testimonial.author_id == seller.id }
   end
 
   def testimonial_from_starter
@@ -144,7 +145,11 @@ class Transaction < ActiveRecord::Base
   # TODO This assumes that author is seller (which is true for all offers, sell, give, rent, etc.)
   # Change it so that it looks for TransactionProcess.author_is_seller
   def seller
-    author
+    if listing
+      author
+    else
+      order.seller
+    end
   end
 
   # TODO This assumes that author is seller (which is true for all offers, sell, give, rent, etc.)
@@ -154,7 +159,7 @@ class Transaction < ActiveRecord::Base
   end
 
   def participations
-    [author, starter]
+    [seller, starter]
   end
 
   def payer
@@ -162,7 +167,7 @@ class Transaction < ActiveRecord::Base
   end
 
   def payment_receiver
-    author
+    seller
   end
 
   # Return true if the transaction is in a state that it can be confirmed

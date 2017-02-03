@@ -9,13 +9,15 @@ module TransactionService::DataTypes::Transaction
     [:community_id, :fixnum, :mandatory],
     [:community_uuid, :uuid], # This will be mandatory once the migrations have run
     [:starter_id, :string, :mandatory],
-    [:listing_id, :fixnum, :mandatory],
+    [:listing_id, :fixnum, :optional], # fixme: should validate: one of listing_id or order_id is required
+    [:order_id, :fixnum, :optional], # fixme: should validate: one of listing_id or order_id is required
     [:listing_uuid, :uuid], # This will be mandatory once the migrations have run
     [:listing_title, :string, :mandatory],
     [:listing_price, :money, :optional],
     [:item_total, :money, :mandatory],
     [:shipping_price, :money],
     [:listing_author_id, :string, :mandatory],
+    [:seller_id, :string],
     [:listing_quantity, :fixnum, default: 1],
     [:unit_type, :to_symbol, one_of: [:hour, :day, :night, :week, :month, :custom, nil]],
     [:unit_tr_key, :string, :optional],

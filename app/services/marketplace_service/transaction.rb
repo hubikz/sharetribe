@@ -259,14 +259,14 @@ module MarketplaceService
       end
 
       def transaction_with_conversation(transaction_id:, person_id: nil, community_id:)
-        rel = TransactionModel.joins(:listing)
+        rel = TransactionModel.joins('LEFT JOIN `listings` ON `listings`.`id` = `transactions`.`listing_id` LEFT JOIN `orders` ON `orders`.`id` = `transactions`.`order_id`')
           .where(id: transaction_id, deleted: false)
           .where(community_id: community_id)
           .includes(:booking)
 
         with_person = Maybe(person_id)
           .map { |p_id|
-            [rel.where("starter_id = ? OR listings.author_id = ?", p_id, p_id)]
+            [rel.where("starter_id = ? OR listings.author_id = ? OR orders.seller_id = ?", p_id, p_id, p_id)]
           }
           .or_else { [rel] }
           .first

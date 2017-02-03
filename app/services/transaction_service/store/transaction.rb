@@ -6,7 +6,8 @@ module TransactionService::Store::Transaction
   NewTransaction = EntityUtils.define_builder(
     [:community_id, :fixnum, :mandatory],
     [:community_uuid, :string, :mandatory, transform_with: UUIDUtils::RAW], # :string type for raw bytes
-    [:listing_id, :fixnum, :mandatory],
+    [:listing_id, :fixnum], # fixme: validate if listing_id or order_id is given
+    [:order_id, :fixnum], # fixme: validate if listing_id or order_id is given
     [:listing_uuid, :string, :mandatory, transform_with: UUIDUtils::RAW], # :string type for raw bytes
     [:starter_id, :string, :mandatory],
     [:starter_uuid, :string, :mandatory, transform_with: UUIDUtils::RAW], # :string type for raw bytes
@@ -34,7 +35,8 @@ module TransactionService::Store::Transaction
     [:id, :fixnum, :mandatory],
     [:community_id, :fixnum, :mandatory],
     [:community_uuid, :uuid, :mandatory, transform_with: UUIDUtils::PARSE_RAW],
-    [:listing_id, :fixnum, :mandatory],
+    [:listing_id, :fixnum], # fixme: validate if listing_id or order_id is given
+    [:order_id, :fixnum], # fixme: validate if listing_id or order_id is given
     [:listing_uuid, :uuid, :mandatory, transform_with: UUIDUtils::PARSE_RAW],
     [:starter_id, :string, :mandatory],
     [:starter_uuid, :uuid, :mandatory, transform_with: UUIDUtils::PARSE_RAW],
@@ -204,10 +206,10 @@ module TransactionService::Store::Transaction
 
   def build_conversation(tx_model, tx_data)
     conversation = tx_model.build_conversation(
-      tx_data.slice(:community_id, :listing_id))
+      tx_data.slice(:community_id, :listing_id, :order_id))
 
     conversation.participations.build(
-      person_id: tx_data[:listing_author_id],
+      person_id: tx_data[:listing_author_id] ? tx_data[:listing_author_id] : tx_data[:order_seller_id],
       is_starter: false,
       is_read: false)
 

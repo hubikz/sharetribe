@@ -98,8 +98,29 @@ module MarketplaceService
         [:transitions, :mandatory] # Could add Array validation
       ]
 
+      transaction_order_spec = [
+                  [:type, const_value: :transaction],
+                  [:transaction_id, :fixnum, :mandatory],
+          
+                  [:order_id, :fixnum, :mandatory],
+                  [:order_title, :string, :mandatory],
+
+                  [:last_transition_at, :time, :mandatory],
+                  [:last_transition_to_state, :string, :mandatory],
+                  [:last_transition_metadata, :hash, :optional],
+                  [:last_message_at, :time, :optional],
+                  [:last_message_content, :string, :optional],
+          
+                  [:payment_total, :money, :optional],
+          
+                  [:author, :hash, :mandatory],
+                  [:waiting_feedback, :mandatory, transform_with: @tiny_int_to_bool],
+                  [:transitions, :mandatory] # Could add Array validation
+            ]
+
       InboxConversation = EntityUtils.define_builder(*inbox_row_common_spec, *conversation_spec)
       InboxTransaction = EntityUtils.define_builder(*inbox_row_common_spec, *conversation_spec, *transaction_spec)
+      InboxOrderTransaction = EntityUtils.define_builder(*inbox_row_common_spec, *conversation_spec, *transaction_order_spec)
 
       module_function
 
@@ -282,6 +303,7 @@ module MarketplaceService
       @construct_sql = ->(params) {
         "
           SELECT
+            IF(listings.id, true, false)                      AS is_listing_transaction,
             transactions.id AS transaction_id,
             conversations.id AS conversation_id,
 
@@ -297,7 +319,11 @@ module MarketplaceService
             listings.title                                    AS listing_title,
             listings.deleted                                  AS listing_deleted,
 
+            orders.id                                         AS order_id,
+            concat(orders.basket_id, '-', orders.id)          AS order_title,
+
             listings.author_id                                AS author_id,
+            orders.seller_id                                  AS seller_id,
             current_participation.person_id                   AS current_id,
             other_participation.person_id                     AS other_id,
 
@@ -321,6 +347,7 @@ module MarketplaceService
 
           LEFT JOIN transactions      ON transactions.conversation_id = conversations.id
           LEFT JOIN listings          ON transactions.listing_id = listings.id
+          LEFT JOIN orders            ON transactions.order_id = orders.id
           LEFT JOIN testimonials      ON (testimonials.transaction_id = transactions.id AND testimonials.author_id = #{params[:person_id]})
           LEFT JOIN participations    AS current_participation ON (current_participation.conversation_id = conversations.id AND current_participation.person_id = #{params[:person_id]})
           LEFT JOIN participations    AS other_participation ON (other_participation.conversation_id = conversations.id AND other_participation.person_id != #{params[:person_id]})
